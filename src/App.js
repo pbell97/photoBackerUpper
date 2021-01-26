@@ -1,22 +1,31 @@
 import logo from "./logo.svg";
 import "./App.css";
+import LoginModal from "./components/LoginPage";
+import FooterStatusBar from "./components/Footer";
+import { useState } from "react";
+
+let config = require("./configVariables.json");
 
 function App() {
+    const [loginDetails, setLoginDetails] = useState({ username: "" });
+    const [view, setView] = useState("login");
+
+    function handleLogin(username) {
+        setLoginDetails({ ...loginDetails, username: username });
+        setView("homepage");
+    }
+
     return (
         <div className="App">
             <header className="App-header">
-                <img src={logo} className="App-logo" alt="logo" />
-                <p>
-                    Edit <code>src/App.js</code> and save to reload.
-                </p>
-                <a
-                    className="App-link"
-                    href="https://reactjs.org"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    Learn React This is a test
-                </a>
+                {view == "login" && <LoginModal handleLogin={handleLogin} />}
+                {view == "homepage" && (
+                    <div>
+                        <h1>Homepage</h1>
+                        <p>Hello {loginDetails.username}</p>
+                    </div>
+                )}
+                <FooterStatusBar />
             </header>
         </div>
     );

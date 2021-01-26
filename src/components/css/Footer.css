@@ -1,0 +1,21 @@
+#footer {
+    width: 100vw;
+    background-color: lightgray;
+    font-size: 11pt;
+    height: 25px;
+    position: absolute;
+    bottom: 0px;
+    color: black;
+}
+
+.footerLeft {
+    max-width: 50vw;
+    float: left;
+    margin-left: 1vw;
+}
+
+.footerRight {
+    max-width: 50vw;
+    float: right;
+    margin-right: 1vw;
+}
