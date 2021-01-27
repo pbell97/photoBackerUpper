@@ -16,8 +16,8 @@ import {
 function FooterStatusBar(props) {
     return (
         <div id="footer">
-            <span class="footerLeft">This is a left footer status</span>
-            <span class="footerRight">This is a right footer status</span>
+            <span className="footerLeft">This is a left footer status</span>
+            <span className="footerRight">This is a right footer status</span>
         </div>
     );
 }

@@ -2,6 +2,7 @@ import logo from "./logo.svg";
 import "./App.css";
 import LoginModal from "./components/LoginPage";
 import FooterStatusBar from "./components/Footer";
+import UploadButtom from "./components/Upload";
 import { useState } from "react";
 
 let config = require("./configVariables.json");
@@ -23,6 +24,7 @@ function App() {
                     <div>
                         <h1>Homepage</h1>
                         <p>Hello {loginDetails.username}</p>
+                        <UploadButtom />
                     </div>
                 )}
                 <FooterStatusBar />
