@@ -15,6 +15,7 @@ const path = require("path");
 const ONE_MEGABYTE = 1024 * 1024;
 const uploadOptions = { bufferSize: 4 * ONE_MEGABYTE, maxBuffers: 20 };
 const ONE_MINUTE = 60 * 1000;
+const ThumbnailHelper = require("./ThumbnailHelper");
 
 let config = require("./configVariables.json");
 
@@ -67,9 +68,51 @@ async function uploadLocalFile(filename, filepath) {
     blockBlobClient.uploadFile(filepath);
 }
 
-let filename = "Sample7.png";
-let filepath = "/Users/patrickbell/Desktop/Sample7.png";
-uploadLocalFile(filename, filepath);
+var Readable = require("stream").Readable;
+function bufferToStream(buffer) {
+    var stream = new Readable();
+    stream.push(buffer);
+    stream.push(null);
+
+    return stream;
+}
+
+async function testUploadBuffer(filename, filepath) {
+    let thumbnail = await ThumbnailHelper.ThumbnailHelper.makeThumbnailFileToBuffer(
+        filepath,
+        20
+    );
+    let thumbnailStream = bufferToStream(thumbnail);
+    let config = require("./configVariables.json");
+    let containerName = config.containerName;
+    let blobServiceClient = new BlobServiceClient(config.bloblSASUrl);
+
+    const newUUID = uuid();
+    const blobName = `${newUUID}_${filename}`;
+    const containerClient = blobServiceClient.getContainerClient(containerName);
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+
+    try {
+        let result = await blockBlobClient.uploadStream(
+            thumbnailStream,
+            uploadOptions.bufferSize,
+            uploadOptions.maxBuffers,
+            {
+                blobHTTPHeaders: {
+                    blobContentType: "image/jpeg",
+                },
+                onProgress: (ev) => console.log(`${ev.loadedBytes}`),
+            }
+        );
+        return result;
+    } catch (err) {
+        console.log(err);
+    }
+}
+let filename = "SampleThumbnail.jpg";
+let filepath = "/Users/patrickbell/Desktop/dogPics/Ellie Pics/IMG_0240.JPG";
+testUploadBuffer(filename, filepath);
+// uploadLocalFile(filename, filepath);
 
 let blobnameToDownload = "9819b390-6030-11eb-825f-574a92b3cfce-Sample8.png";
 
