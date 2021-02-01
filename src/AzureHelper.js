@@ -127,7 +127,7 @@ module.exports = class AzureStorageHelper {
                 const downloadBlockBlobResponse = await blockBlobClient.download(0);
                 let totalFileSize = downloadBlockBlobResponse.contentLength;
 
-                let originalFileName = blobName.substr(blobName.indexOf("_") + 38, blobName.length);
+                let originalFileName = path.basename(blobName);
                 let fullFilePath = path.join(folderPath, originalFileName);
 
                 await this._downloadFromStream(downloadBlockBlobResponse.readableStreamBody, fullFilePath);

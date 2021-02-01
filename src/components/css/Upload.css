@@ -1,0 +1,9 @@
+/* .browseButton {
+    position: absolute;
+    left: 1em;
+} */
+
+.uploadButton {
+    position: relative;
+    left: 66%;
+}

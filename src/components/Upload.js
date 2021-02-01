@@ -1,21 +1,8 @@
 import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import "./css/Footer.css";
-import {
-    Card,
-    CardImg,
-    CardText,
-    CardBody,
-    CardTitle,
-    CardSubtitle,
-    Button,
-    Label,
-    Input,
-    Modal,
-    ModalHeader,
-    ModalBody,
-    ModalFooter,
-} from "reactstrap";
+import "./css/Upload.css";
+import { Card, CardImg, CardText, CardBody, CardTitle, Spinner, Button, Label, Input, Modal, ModalHeader, ModalBody, ModalFooter } from "reactstrap";
+import File from "../FileHandler";
 const electron = window.require("electron");
 const dialog = electron.remote.dialog;
 const path = require("path");
@@ -32,7 +19,7 @@ function FindFilesButton(props) {
             <Button color="primary" size="lg" onClick={toggleUploadModal}>
                 Find Files
             </Button>
-            <UploadModal isOpen={showUploadModal} toggle={toggleUploadModal} />
+            <UploadModal isOpen={showUploadModal} toggle={toggleUploadModal} loginDetails={props.loginDetails} triggerLoadFiles={props.triggerLoadFiles} />
         </>
     );
 }
@@ -40,6 +27,8 @@ function FindFilesButton(props) {
 function UploadModal(props) {
     const [files, setFiles] = useState([]);
     const [fileTags, setFileTags] = useState([]);
+    const [isUploading, setIsUploading] = useState(false);
+    const [currentUploadingFileName, setCurrentUploadingFileName] = useState("");
 
     function openBrowseDialog() {
         let selection = dialog.showOpenDialogSync({
@@ -64,22 +53,41 @@ function UploadModal(props) {
         if (files.length == 0) {
             alert("Must select a file before uploading");
         } else {
-            console.log("Should be uploading...");
-            let AzHelp = new AzureStorageHelper();
-            files.forEach((file) => {
-                AzHelp.uploadFile(file.path, "patrick");
-            });
+            for (const file of files) {
+                let newFile = new File(props.loginDetails.username);
+                newFile.setFilePath(file.path);
+                console.log("Should be uploading " + file.name);
+                setIsUploading(true);
+                setCurrentUploadingFileName(file.name);
+                await newFile.uploadFile();
+                setIsUploading(false);
+                setCurrentUploadingFileName("");
+                console.log("Uploaded " + file.name);
+            }
             setFiles([]);
+            setFileTags([]);
+            props.toggle();
+            props.triggerLoadFiles();
         }
     }
 
     return (
         <Modal isOpen={props.isOpen} toggle={props.toggle}>
             <ModalHeader>Upload File</ModalHeader>
-            <ModalBody>
+            <ModalBody className="modalBody">
                 {fileTags}
-                <Button onClick={openBrowseDialog}>Browse</Button>
-                <Button onClick={uploadFiles}>Upload</Button>
+                {isUploading && (
+                    <div>
+                        <Spinner color="primary" />
+                        Uploading {currentUploadingFileName}...
+                    </div>
+                )}
+                <Button onClick={openBrowseDialog} className="browseButton">
+                    Browse
+                </Button>
+                <Button onClick={uploadFiles} className="uploadButton">
+                    Upload
+                </Button>
             </ModalBody>
         </Modal>
     );

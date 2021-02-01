@@ -105,6 +105,32 @@ module.exports = class File {
             }
         });
     }
+
+    async downloadJPG(downloadPath) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                let azHelper = new AzureStorageHelper();
+                let downloadedPath = await azHelper.downloadFile(this.azureFilePath, downloadPath);
+                resolve(downloadedPath);
+            } catch (err) {
+                console.error(err);
+                reject(err);
+            }
+        });
+    }
+
+    async downloadCR2(downloadPath) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                let azHelper = new AzureStorageHelper();
+                let downloadedPath = await azHelper.downloadFile(this.azureRawFilePath, downloadPath);
+                resolve(downloadedPath);
+            } catch (err) {
+                console.error(err);
+                reject(err);
+            }
+        });
+    }
     // Load from azure (load filenames and azure paths, not necessarily thumbnails automatically)
 };
 

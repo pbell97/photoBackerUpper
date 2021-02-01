@@ -1,11 +1,15 @@
 import logo from "./logo.svg";
-import "./App.css";
+import "./components/css/App.css";
 import LoginModal from "./components/LoginPage";
 import FooterStatusBar from "./components/Footer";
 import FindFilesButton from "./components/Upload";
+import ImagePreview from "./components/ImagePreview";
 import { useEffect, useState } from "react";
 import File from "./FileHandler";
 import AzureStorageHelper from "./AzureHelper";
+import NewFolderButton from "./components/NewFolderButton";
+import Folder from "./components/Folder";
+const path = window.require("path");
 
 let config = require("./configVariables.json");
 
@@ -13,42 +17,45 @@ function App() {
     const [loginDetails, setLoginDetails] = useState({ username: "" });
     const [view, setView] = useState("login");
     const [userFiles, setUserFiles] = useState([]);
+    const [loadFilesIndicator, setLoadFilesIndicator] = useState(false);
+    const [currentDirectory, setCurrentDirectory] = useState("");
+    const [folders, setFolders] = useState([]);
 
     function handleLogin(username) {
         setLoginDetails({ ...loginDetails, username: username });
         setView("homepage");
-    }
-
-    function getRootFileName(filename) {
-        filename = filename.substr(0, filename.indexOf("."));
-        if (filename.includes("-thumbnail")) {
-            filename = filename.substr(0, filename.indexOf("-thumbnail"));
-        }
-        return filename;
+        console.log("Running handleLogin");
     }
 
     async function loadAllFiles() {
+        function getRootFileName(filename) {
+            filename = filename.substr(0, filename.indexOf("."));
+            if (filename.includes("-thumbnail")) {
+                filename = filename.substr(0, filename.indexOf("-thumbnail"));
+            }
+            return filename;
+        }
+
         try {
             let azh = new AzureStorageHelper();
             let filenames = await azh.getBlobNames();
             let files = {};
             let username = loginDetails.username;
-            await filenames.forEach(async (file) => {
+            await filenames.forEach((file) => {
                 let rootname = getRootFileName(file);
-                if (!Object.keys(files).includes(rootname)) {
-                    files[rootname] = new File(username);
+                const allowedFileTypes = [".png", ".jpg", ".jpeg", ".cr2"];
+                let fileType = path.extname(file);
+                if (allowedFileTypes.includes(fileType.toLowerCase())) {
+                    if (!Object.keys(files).includes(rootname)) {
+                        files[rootname] = new File(username);
+                    }
+                    files[rootname].setAzureFilePath(file);
                 }
-                files[rootname].setAzureFilePath(file);
-                await files[rootname].loadThumbnail();
-                console.log("Done with " + rootname);
             });
-            if (Object.keys(files).length > 0) {
-                console.log("loading Thumbnail");
-                var firstFileName = Object.keys(files)[0];
-                var file = files[firstFileName];
-                let buffer = await file.loadThumbnail();
-                // var imageElem = document.getElementById("mainImg");
-                // imageElem.src = "data:image/jpeg;base64," + buffer.toString("base64");
+
+            // ForEach doesn't work well with async/await, use for...of instead
+            for (const rootname of Object.keys(files)) {
+                let response = await files[rootname].loadThumbnail();
             }
 
             console.log(files);
@@ -58,15 +65,30 @@ function App() {
         }
     }
 
-    function convertThumbnailBufferToImgSrc(buffer) {
-        return "data:image/jpeg;base64," + buffer.toString("base64");
+    function triggerLoadFiles() {
+        console.log("Triggering loadFiles()");
+        setLoadFilesIndicator(!loadFilesIndicator);
+    }
+
+    function addFolder(folderName) {
+        let newFolders = folders.concat(folderName);
+        setFolders(newFolders);
     }
 
     useEffect(() => {
         if (loginDetails.username != "") {
+            console.log("Running useEffect->loadAllFiles");
             loadAllFiles();
         }
-    }, [loginDetails]);
+    }, [loginDetails, loadFilesIndicator]);
+
+    useEffect(() => {
+        if (loginDetails.username) {
+            setCurrentDirectory("/" + loginDetails.username + "/");
+        } else {
+            setCurrentDirectory("/");
+        }
+    });
 
     return (
         <div className="App">
@@ -74,20 +96,28 @@ function App() {
                 {view == "login" && <LoginModal handleLogin={handleLogin} />}
                 {view == "homepage" && (
                     <div>
-                        <h1>Homepage</h1>
-                        <p>Hello {loginDetails.username}</p>
-                        <FindFilesButton />
-                        {Object.keys(userFiles).map((filename) => {
-                            var file = userFiles[filename];
-                            if (file.thumbnailBuffer) {
-                                return <img src={convertThumbnailBufferToImgSrc(file.thumbnailBuffer)} />;
-                            } else {
-                                return <img />;
-                            }
-                        })}
+                        <div className="header">
+                            <h1>Homepage</h1>
+                            <p>Hello {loginDetails.username}</p>
+                            <NewFolderButton addFolder={addFolder} />
+                            <FindFilesButton loginDetails={loginDetails} triggerLoadFiles={triggerLoadFiles} />
+                        </div>
+                        <div className="imagesContainer">
+                            {Object.keys(userFiles).map((filename) => {
+                                var file = userFiles[filename];
+                                if (file.thumbnailBuffer) {
+                                    return <ImagePreview file={file} />;
+                                } else {
+                                    return <img />;
+                                }
+                            })}
+                            {folders.map((folderName) => {
+                                return <Folder folderName={folderName} />;
+                            })}
+                        </div>
                     </div>
                 )}
-                <FooterStatusBar />
+                <FooterStatusBar right={currentDirectory} />
             </header>
         </div>
     );

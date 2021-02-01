@@ -1,0 +1,25 @@
+.imgPreview {
+    width: 220px;
+    max-height: 260px;
+    margin: 10px;
+    background-color: whitesmoke;
+    border-radius: 5px;
+}
+
+.imgPreview:hover {
+    box-shadow: 0px 0px 20px white;
+}
+
+.imgPreview button {
+    margin: 10px;
+}
+
+.imgPreview img {
+    margin-top: 5px;
+}
+
+.imgPreview h5 {
+    color: black;
+    position: relative;
+    bottom: -5px;
+}
